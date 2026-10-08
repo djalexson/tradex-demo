@@ -1,0 +1,55 @@
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ../backend:/var/www/backend
+      - ./nginx.dev.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+      - frontend
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ../backend:/var/www/backend
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ../frontend:/app
+    ports:
+      - "3000:3000"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tradex
+      POSTGRES_USER: tradex
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+volumes:
+  postgres_data:
